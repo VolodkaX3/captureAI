@@ -13,8 +13,16 @@ document.getElementById('btn-shot').addEventListener('click', () => {
 });
 
 
+
+// Settings button
+const settingsPanel = document.getElementById('settings-panel');
+
 document.getElementById('btn-settings').addEventListener('click', () => {
-  console.log('');
+  settingsPanel.classList.remove('hidden');
+});
+
+document.getElementById('btn-settings-close').addEventListener('click', () => {
+  settingsPanel.classList.add('hidden');
 });
 
 // Чтобы подключить новую кнопку:
