@@ -93,7 +93,7 @@ app.whenReady().then(() => {
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Show",
-      click: () => toggleOverlay
+      click: () => toggleOverlay()
     },
     {
       type: "separator"
