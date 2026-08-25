@@ -1,8 +1,9 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
 const path = require('path');
 
 let overlayWindow = null;
 let splashWindow = null;
+let tray = null; // Переменная для tray
 
 function createOverlayWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -86,6 +87,24 @@ app.whenReady().then(() => {
   if (!registered) {
     console.error('Hotkey registration failed — it may be taken by another app.');
   }
+
+  const icon = nativeImage.createFromPath(path.join(__dirname, "img/icon.png"));
+  tray = new Tray(icon);
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show",
+      click: () => toggleOverlay
+    },
+    {
+      type: "separator"
+    },
+    {
+      label: "Exit",
+      click: () => app.quit()
+    }
+  ])
+
+  tray.setContextMenu(contextMenu);
 });
 
 app.on('will-quit', () => {
