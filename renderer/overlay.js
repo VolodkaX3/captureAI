@@ -12,18 +12,31 @@ document.getElementById('btn-shot').addEventListener('click', () => {
   console.log('');
 });
 
-
-
-// Settings button
+//=====================================================================
+//--------------------SETTINGS------------------------------------------
+// Settings button — opens/closes the settings panel with animation
 const settingsPanel = document.getElementById('settings-panel');
 
-document.getElementById('btn-settings').addEventListener('click', () => {
-  settingsPanel.classList.remove('hidden');
+function openSettings() {
+  settingsPanel.classList.remove('hidden', 'closing');
+  settingsPanel.classList.add('opening');
+}
+
+function closeSettings() {
+  settingsPanel.classList.remove('opening');
+  settingsPanel.classList.add('closing');
+}
+
+// After the closing animation ends, actually hide the panel
+settingsPanel.addEventListener('animationend', (e) => {
+  if (e.animationName === 'settings-close') {
+    settingsPanel.classList.add('hidden');
+    settingsPanel.classList.remove('closing');
+  }
 });
 
-document.getElementById('btn-settings-close').addEventListener('click', () => {
-  settingsPanel.classList.add('hidden');
-});
+document.getElementById('btn-settings').addEventListener('click', openSettings);
+document.getElementById('btn-settings-close').addEventListener('click', closeSettings);
 
 // Чтобы подключить новую кнопку:
 // document.getElementById('btn-yourid').addEventListener('click', () => { ... });
