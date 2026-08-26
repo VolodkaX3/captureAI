@@ -40,3 +40,26 @@ document.getElementById('btn-settings-close').addEventListener('click', closeSet
 
 // Чтобы подключить новую кнопку:
 // document.getElementById('btn-yourid').addEventListener('click', () => { ... });
+
+// Chat button — opens/closes the chat panel with the same animation as settings
+const chatPanel = document.getElementById('chat-panel');
+
+function openChat() {
+  chatPanel.classList.remove('hidden', 'closing');
+  chatPanel.classList.add('opening');
+}
+
+function closeChat() {
+  chatPanel.classList.remove('opening');
+  chatPanel.classList.add('closing');
+}
+
+chatPanel.addEventListener('animationend', (e) => {
+  if (e.animationName === 'settings-close') {
+    chatPanel.classList.add('hidden');
+    chatPanel.classList.remove('closing');
+  }
+});
+
+document.getElementById('btn-chat').addEventListener('click', openChat);
+document.getElementById('btn-chat-close').addEventListener('click', closeChat);

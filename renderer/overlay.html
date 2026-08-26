@@ -8,6 +8,15 @@
     <div id="container">
 <!-- это панелька (и да клод пидор поэтому мне надо писать все самому сука)-->
         <div id="panel">
+          <!-- панель кнопки чат-->
+      <div id="chat-panel" class="hidden">
+        <div class="settings-header">
+          <span></span>
+          <button class="icon-btn small" id="btn-chat-close" title="Close chat">X</button>
+        </div>
+        <div class="settings-body"></div>
+      </div>    
+      <!-- панель кнопки настроек-->      
       <div id="settings-panel" class="hidden">
         <div class="settings-header">
           <span>Settings</span>
@@ -29,6 +38,9 @@
         </button>
         <button class="icon-btn" id="btn-close" title="Close">
           <img src="img/CloseButton1W.png" alt="Close">
+        </button>
+        <button class="icon-btn" id="btn-chat" title="Chat">
+          <img src="img/ChatButtonW.png" alt="Chat">
         </button>
         <!-- Чтобы добавить кнопку позже: скопируй один блок <button class="icon-btn">,
              дай новый id и иконку, затем добавь обработчик в overlay.js -->
