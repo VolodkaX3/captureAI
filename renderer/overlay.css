@@ -154,7 +154,7 @@ html, body {
   overflow-y: auto;
 }
 
-#chat-panel {
+#info-panel {
   position: absolute;
   inset: 0;
   background-color: #00051b;
@@ -167,14 +167,14 @@ html, body {
   transform-origin: center center;
 }
 
-#chat-panel.hidden {
+#info-panel.hidden {
   display: none;
 }
 
-#chat-panel.opening {
+#info-panel.opening {
   animation: settings-open 0.18s ease-out forwards;
 }
 
-#chat-panel.closing {
+#info-panel.closing {
   animation: settings-close 0.15s ease-in forwards;
 }

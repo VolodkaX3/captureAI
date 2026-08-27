@@ -41,25 +41,25 @@ document.getElementById('btn-settings-close').addEventListener('click', closeSet
 // Чтобы подключить новую кнопку:
 // document.getElementById('btn-yourid').addEventListener('click', () => { ... });
 
-// Chat button — opens/closes the chat panel with the same animation as settings
-const chatPanel = document.getElementById('chat-panel');
+// Info button — opens/closes the info panel with the same animation as settings
+const infoPanel = document.getElementById('info-panel'); 
 
-function openChat() {
-  chatPanel.classList.remove('hidden', 'closing');
-  chatPanel.classList.add('opening');
+function openInfo() {
+  infoPanel.classList.remove('hidden', 'closing');
+  infoPanel.classList.add('opening');
 }
 
-function closeChat() {
-  chatPanel.classList.remove('opening');
-  chatPanel.classList.add('closing');
+function closeInfo() {
+  infoPanel.classList.remove('opening');
+  infoPanel.classList.add('closing');
 }
 
-chatPanel.addEventListener('animationend', (e) => {
+infoPanel.addEventListener('animationend', (e) => {
   if (e.animationName === 'settings-close') {
-    chatPanel.classList.add('hidden');
-    chatPanel.classList.remove('closing');
+    infoPanel.classList.add('hidden');
+    infoPanel.classList.remove('closing');
   }
 });
 
-document.getElementById('btn-chat').addEventListener('click', openChat);
-document.getElementById('btn-chat-close').addEventListener('click', closeChat);
+document.getElementById('btn-info').addEventListener('click', openInfo);
+document.getElementById('btn-info-close').addEventListener('click', closeInfo);
