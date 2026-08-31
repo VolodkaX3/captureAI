@@ -88,7 +88,9 @@ app.whenReady().then(() => {
     console.error('Hotkey registration failed — it may be taken by another app.');
   }
 
-  const icon = nativeImage.createFromPath(path.join(__dirname, "img/MainiconW.png"));
+  let icon = nativeImage.createFromPath(path.join(__dirname, "img/MainiconW.png"));
+  icon = icon.resize({ width: 22, height: 22 });
+  icon.setTemplateImage(false);
   tray = new Tray(icon);
   const contextMenu = Menu.buildFromTemplate([
     {
