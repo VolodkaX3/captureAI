@@ -1,9 +1,11 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
 const path = require('path');
+const fs = require("fs");
 
 let overlayWindow = null;
 let splashWindow = null;
 let tray = null; // Переменная для tray
+let API_KEY;
 
 function createOverlayWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -82,6 +84,14 @@ function createSplashWindow() {
 
 app.whenReady().then(() => {
   createSplashWindow();
+  try {
+    const apiKeyPath = path.join(__dirname, "api_key.txt");
+    const file = fs.readFileSync(apiKeyPath, "utf-8");
+    API_KEY = file;
+    console.log(API_KEY)
+  } catch (err) {
+    console.error(`Error in reading api key file: ${err.message}`);
+  }
 
   const registered = globalShortcut.register('CommandOrControl+Shift+Space', toggleOverlay);
   if (!registered) {
