@@ -1,6 +1,7 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu, desktopCapturer } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
 const path = require('path');
 const fs = require("fs");
+const screenshot = require("screenshot-desktop");
 
 let overlayWindow = null;
 let splashWindow = null;
@@ -147,11 +148,28 @@ function updateScreenshotWinPosition() {
     console.error(`Error in updating screenshot window settings: ${err.message}`);
   }
   
+  workingImage = null;
+
   screenshotWin.destroy();
-  screenshotWin = null
+  screenshotWin = null;
+}
+
+async function desktopCapture() {
+  try {
+    const img = await screenshot({ format: "png" });
+    imgBase64 = img.toString("base64");
+    const htmlDataUrl = `data:image/png;base64,${imgBase64}`;
+    return {
+      img,
+      htmlDataUrl
+    };
+  } catch (err) {
+    console.error(`Error in making screenshot: ${err.message}`);
+  }
 }
 
 let screenshotWin;
+let workingImage;
 ipcMain.on("make-screenshot", () => {
   let screenshotWindowSettingsData = {};
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -189,7 +207,15 @@ ipcMain.on("make-screenshot", () => {
   screenshotWin.loadFile("./renderer/screenshot_wrapper/index.html");
   // screenshotWin.webContents.openDevTools();
 
-  screenshotWin.once("ready-to-show", () => screenshotWin.show());
+  screenshotWin.once("ready-to-show", async () => {
+    overlayWindow.hide();
+    overlayWindow.once("hide", async () => {
+      const capture = await desktopCapture();
+      workingImage = capture.img;
+      screenshotWin.show();
+      screenshotWin.webContents.send("screenshot-capture", capture.htmlDataUrl);
+    })
+  })
 
   screenshotWin.on("close", event => {
     updateScreenshotWinPosition();

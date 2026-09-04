@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('api', {
   onShown: (callback) => ipcRenderer.on('overlay-shown', callback),
 
   // screenshot
-  makeScreenshot: () => ipcRenderer.send("make-screenshot")
+  makeScreenshot: () => ipcRenderer.send("make-screenshot"),
+  onScreenshotCapture: callback => ipcRenderer.on("screenshot-capture", callback)
 });
 
