@@ -1,5 +1,5 @@
 {
-  "name": "screenshot-ai-free",
+  "name": "CaptureAI",
   "version": "1.0.0",
   "description": "Hotkey overlay that captures the screen and copies it to the clipboard for pasting into any free AI chat",
   "main": "main.js",
