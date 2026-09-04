@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu, desktopCapturer } = require('electron');
 const path = require('path');
 const fs = require("fs");
 
@@ -43,6 +43,7 @@ function createOverlayWindow() {
 }
 
 function toggleOverlay() {
+  if (screenshotWin) updateScreenshotWinPosition();
   if (!overlayWindow) createOverlayWindow();
   if (overlayWindow.isVisible()) {
     overlayWindow.hide();
@@ -88,7 +89,7 @@ app.whenReady().then(() => {
     const apiKeyPath = path.join(__dirname, "api_key.txt");
     const file = fs.readFileSync(apiKeyPath, "utf-8");
     API_KEY = file;
-    console.log(API_KEY)
+    console.log("Api key file successfully read!");
   } catch (err) {
     console.error(`Error in reading api key file: ${err.message}`);
   }
@@ -130,3 +131,68 @@ app.on('window-all-closed', (e) => {
 ipcMain.on('hide-overlay', () => {
   if (overlayWindow) overlayWindow.hide();
 });
+
+
+// screenshot
+function updateScreenshotWinPosition() {
+  const [x, y] = screenshotWin.getPosition();
+  const [width, height] = screenshotWin.getSize();
+  const data = {x, y, width, height};
+
+  try {
+    const filePath = path.join(app.getPath("userData"), "screenshotWindowSettings.json");
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+    console.log("Screenshot window settings updated successfully!");
+  } catch (err) {
+    console.error(`Error in updating screenshot window settings: ${err.message}`);
+  }
+  
+  screenshotWin.destroy();
+  screenshotWin = null
+}
+
+let screenshotWin;
+ipcMain.on("make-screenshot", () => {
+  let screenshotWindowSettingsData = {};
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  try {
+    const filePath = path.join(app.getPath("userData"), "screenshotWindowSettings.json");
+    if (!fs.existsSync(filePath)) throw new Error("Screenshot window settings file doesn't exists");
+    screenshotWindowSettingsData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    if (screenshotWindowSettingsData.width > width) screenshotWindowSettingsData.width = null;
+    if (screenshotWindowSettingsData.height > height) screenshotWindowSettingsData.height = null;
+    if (screenshotWindowSettingsData.x > width) screenshotWindowSettingsData.x = null;
+    if (screenshotWindowSettingsData.y > height) screenshotWindowSettingsData.y = null;
+  } catch (err) {
+    console.log(`Error in reading screenshot window file: ${err.message}`);
+    screenshotWindowSettingsData = { width: null, height: null, x: null, y: null };
+  }
+
+  const winWidth = screenshotWindowSettingsData.width || width - 100;
+  const winHeight = screenshotWindowSettingsData.height || height - 100;
+  const x = screenshotWindowSettingsData.x || Math.round((width - winWidth) / 2);
+  const y = screenshotWindowSettingsData.y || Math.round((height - winHeight) / 2);
+  console.log(`width: ${winWidth}, height: ${winHeight}, x: ${x}, y: ${y}`);
+  screenshotWin = new BrowserWindow({
+    width: winWidth,
+    height: winHeight,
+    x,
+    y,
+    useContentSize: true,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js")
+    }
+  })
+  screenshotWin.setMenuBarVisibility(false);
+  screenshotWin.loadFile("./renderer/screenshot_wrapper/index.html");
+  // screenshotWin.webContents.openDevTools();
+
+  screenshotWin.once("ready-to-show", () => screenshotWin.show());
+
+  screenshotWin.on("close", event => {
+    updateScreenshotWinPosition();
+    event.preventDefault();
+  })
+})

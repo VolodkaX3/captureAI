@@ -8,9 +8,8 @@ document.getElementById('btn-close').addEventListener('click', () => {
   window.api.hideOverlay();
 });
 
-document.getElementById('btn-shot').addEventListener('click', () => {
-  console.log('');
-});
+
+document.querySelector("#btn-shot").addEventListener("click", event => window.api.makeScreenshot());
 
 //=====================================================================
 //--------------------SETTINGS------------------------------------------
