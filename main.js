@@ -157,7 +157,7 @@ function updateScreenshotWinPosition() {
 async function desktopCapture() {
   try {
     const img = await screenshot({ format: "png" });
-    imgBase64 = img.toString("base64");
+    const imgBase64 = img.toString("base64");
     const htmlDataUrl = `data:image/png;base64,${imgBase64}`;
     return {
       img,
