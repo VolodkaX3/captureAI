@@ -297,9 +297,42 @@ html, body {
   color: #fff;
 }
 
+#chat-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1;
+  justify-content: center;
+  gap: 8px;
+}
+
+#chat-hero {
+  align-self: flex-start;
+  text-align: left;
+  padding: 0 16px;
+}
+
+#chat-hero h2 {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 800;
+  font-size: clamp(20px, 6vw, 28px);
+  line-height: 1.15;
+  color: #9b98d9;
+  margin: 8px 0 6px;
+}
+
+#chat-hero p {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #6f6d94;
+  margin: 0;
+}
+
 #chat-illustration {
   /* было 140px */
-  max-width: 220px;
+  max-width: 160px;
   align-self: center;
   margin-top: 12px;
   pointer-events: none;

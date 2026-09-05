@@ -90,10 +90,10 @@ const chatMessages = document.getElementById("chat-messages");
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 
-const chatIllustration = document.getElementById('chat-illustration');
+const chatEmptyState = document.getElementById('chat-empty-state');
 
 function addChatMessage(text, role) {
-  chatIllustration.style.display = 'none'; // что бы спрятать илюстрацию 
+  chatEmptyState.style.display = 'none'; // прячет и текст, и картинку разом
 
   const bubble = document.createElement('div');
   bubble.className = `chat-msg ${role}`;
