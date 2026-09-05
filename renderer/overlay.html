@@ -8,6 +8,20 @@
   <div id="container">
 <!-- это панелька (и да клод пидор поэтому мне надо писать все самому сука)-->
         <div id="panel">
+        <div id="chat-panel" class="hidden">
+          <div class="settings-header">
+            <span>AIChat</span>
+            <button class="icon-btn small" id="btn-chat-close" title="Close chat">X</button>
+          </div>
+
+          <img id="chat-illustration" src="img/AIMAN.svg" alt="" />
+
+          <div id="chat-messages" class="chat-messages"></div>
+          <form id="chat-form" class="chat-form">
+            <input id="chat-input" type="text" placeholder="Введите сообщение:" autocomplete="off" />
+            <button type="submit" class="chat-send-btn">SEND</button>
+          </form>
+        </div>
           <!-- панель кнопки info-->
       <div id="info-panel" class="hidden">
         <div class="settings-header">

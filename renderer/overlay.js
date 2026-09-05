@@ -62,3 +62,53 @@ infoPanel.addEventListener('animationend', (e) => {
 
 document.getElementById('btn-info').addEventListener('click', openInfo);
 document.getElementById('btn-info-close').addEventListener('click', closeInfo);
+
+//-------------------------------------------------------------------------------
+const chatPanel = document.getElementById('chat-panel');
+
+function openChat(){
+  chatPanel.classList.remove("hidden", "closing");
+  chatPanel.classList.add("opening");
+}
+
+function closeChat(){
+  chatPanel.classList.remove("opening");
+  chatPanel.classList.add("closing");
+}
+
+chatPanel.addEventListener("animationend", (e) => {
+  if (e.animationName === "settings-close") {
+    chatPanel.classList.add("hidden");
+    chatPanel.classList.remove("closing");
+  }
+});
+
+document.getElementById("btn-chat").addEventListener("click", openChat);
+document.getElementById("btn-chat-close").addEventListener("click", closeChat);
+
+const chatMessages = document.getElementById("chat-messages");
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
+
+const chatIllustration = document.getElementById('chat-illustration');
+
+function addChatMessage(text, role) {
+  chatIllustration.style.display = 'none'; // что бы спрятать илюстрацию 
+
+  const bubble = document.createElement('div');
+  bubble.className = `chat-msg ${role}`;
+  bubble.dataset.role = role === 'user' ? 'you' : 'ai';
+  bubble.textContent = text;
+  chatMessages.appendChild(bubble);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = chatInput.value.trim();
+  if (!text) return;
+  addChatMessage(text, 'user');
+  chatInput.value = '';
+  const reply = await window.api.sendChatMessage(text);
+  addChatMessage(reply, 'ai');
+});

@@ -222,3 +222,40 @@ ipcMain.on("make-screenshot", () => {
     event.preventDefault();
   })
 })
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ipcMain.handle('ai-chat', async (event, userText) => {
+  try {
+    const apiKeyPath = path.join(__dirname, "api_key.txt");
+    const currentKey = fs.readFileSync(apiKeyPath, "utf-8").trim();
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${currentKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: userText }]
+            }
+          ]
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.error) {
+      return `Ошибка API: ${data.error.message}`;
+    }
+
+    return data.candidates[0].content.parts[0].text;
+
+  } catch (err) {
+    return `Не удалось получить ответ: ${err.message}`;
+  }
+});
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

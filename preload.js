@@ -6,6 +6,10 @@ contextBridge.exposeInMainWorld('api', {
 
   // screenshot
   makeScreenshot: () => ipcRenderer.send("make-screenshot"),
-  onScreenshotCapture: callback => ipcRenderer.on("screenshot-capture", callback)
+  onScreenshotCapture: callback => ipcRenderer.on("screenshot-capture", callback),
+
+  sendChatMessage: (text) => ipcRenderer.invoke('ai-chat', text)
 });
+
+
 
