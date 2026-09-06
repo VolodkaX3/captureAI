@@ -3,11 +3,16 @@ const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, 
 const path = require('path');
 const fs = require("fs");
 const screenshot = require("screenshot-desktop");
+const { text } = require('stream/consumers');
 
 let overlayWindow = null;
 let splashWindow = null;
 let tray = null; // Переменная для tray
 let API_KEY;
+
+let ai;
+let history = [];
+const usingModel = "gemini-3.7-flash";
 
 function createOverlayWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -35,6 +40,7 @@ function createOverlayWindow() {
 
   overlayWindow.loadFile(path.join(__dirname, 'renderer', 'overlay.html'));
   overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+  // overlayWindow.webContents.openDevTools();
 
 
   overlayWindow.on('blur', () => {
@@ -92,6 +98,8 @@ app.whenReady().then(() => {
     const file = fs.readFileSync(apiKeyPath, "utf-8");
     API_KEY = file;
     console.log("Api key file successfully read!");
+    ai = new GoogleGenAI({ apiKey: API_KEY });
+    console.log("AI initialization successfully")
   } catch (err) {
     console.error(`Error in reading api key file: ${err.message}`);
   }
@@ -224,46 +232,55 @@ ipcMain.on("make-screenshot", () => {
   })
 })
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ipcMain.on("new-chat", () => {
+  history = [];
+})
 
-ipcMain.handle('ai-chat', async (event, userText) => {
-  try {
-    const apiKeyPath = path.join(__dirname, "api_key.txt");
-    if (!fs.existsSync(apiKeyPath)) {
-      return "Ошибка: Файл api_key.txt не найден";
-    }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-    const currentKey = fs.readFileSync(apiKeyPath, "utf-8").trim();
-    if (!currentKey) {
-      return "Ошибка: Файл api_key.txt пуст";
-    }
+async function getResponse(userMessage) {
+  console.log("response")
+  history.push({
+    role: "user",
+    parts: [{ text: userMessage }]
+  })
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${currentKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: userText }]
-            }
-          ]
-        })
+  const response = await ai.models.generateContent({
+    model: usingModel,
+    contents: history
+  })
+
+  const reply = response.text;
+
+  history.push({
+    role: "model",
+    parts: [{ text: reply }]
+  })
+
+  return reply;
+}
+
+async function getResponseWithRetray(maxAttemptsAI, data) {
+  for (let attempt = 0; attempt <= maxAttemptsAI; attempt++) {
+    try {
+      return await getResponse(data);
+    } catch (err) {
+      if (attempt == 3) {
+        return `Error ${err.status}`;
+      } else {
+        console.warn(`Error. Waiting 700ms. Attempt ${attempt} from ${maxAttemptsAI}`);
+        await sleep(700);
       }
-    );
-
-    const data = await response.json();
-
-    if (data.error) {
-      return `Ошибка API: ${data.error.message}`;
     }
-
-    return data.candidates[0].content.parts[0].text;
-
-  } catch (err) {
-    return `Не удалось получить ответ: ${err.message}`;
   }
-});
+}
+
+ipcMain.on("send-message-to-ai", async (event, data) => {
+  const maxAttemptsAI = 3;
+  const reply = await getResponseWithRetray(maxAttemptsAI, data);
+
+  overlayWindow.webContents.send("reply-from-ai", reply);
+})
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

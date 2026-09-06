@@ -69,6 +69,8 @@ const chatPanel = document.getElementById('chat-panel');
 function openChat(){
   chatPanel.classList.remove("hidden", "closing");
   chatPanel.classList.add("opening");
+  window.api.newChat();
+  chatMessages.querySelectorAll(".chat-msg").forEach(element => element.remove())
 }
 
 function closeChat(){
@@ -109,6 +111,12 @@ chatForm.addEventListener('submit', async (e) => {
   if (!text) return;
   addChatMessage(text, 'user');
   chatInput.value = '';
-  const reply = await window.api.sendChatMessage(text);
-  addChatMessage(reply, 'ai');
+  window.api.sendMessageToAI(text);
+  //
+  // const reply = await window.api.sendChatMessage(text);
+  // addChatMessage(reply, 'ai');
 });
+
+window.api.onReplyFromAI(data => {
+  addChatMessage(data, "ai");
+})

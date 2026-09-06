@@ -1,4 +1,4 @@
-window.api.onScreenshotCapture((event, data) => {
+window.api.onScreenshotCapture(data => {
     document.querySelector("#bg").src = data;
 })
 
