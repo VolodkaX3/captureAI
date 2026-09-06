@@ -3,7 +3,6 @@ const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, 
 const path = require('path');
 const fs = require("fs");
 const screenshot = require("screenshot-desktop");
-const { text } = require('stream/consumers');
 
 let overlayWindow = null;
 let splashWindow = null;
