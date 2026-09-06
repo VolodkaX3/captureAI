@@ -1,3 +1,4 @@
+const { GoogleGenAI } = require('@google/genai');
 const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
 const path = require('path');
 const fs = require("fs");
@@ -227,10 +228,17 @@ ipcMain.on("make-screenshot", () => {
 ipcMain.handle('ai-chat', async (event, userText) => {
   try {
     const apiKeyPath = path.join(__dirname, "api_key.txt");
+    if (!fs.existsSync(apiKeyPath)) {
+      return "Ошибка: Файл api_key.txt не найден";
+    }
+
     const currentKey = fs.readFileSync(apiKeyPath, "utf-8").trim();
+    if (!currentKey) {
+      return "Ошибка: Файл api_key.txt пуст";
+    }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${currentKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${currentKey}`,
       {
         method: "POST",
         headers: {
@@ -258,4 +266,4 @@ ipcMain.handle('ai-chat', async (event, userText) => {
     return `Не удалось получить ответ: ${err.message}`;
   }
 });
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
