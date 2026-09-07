@@ -228,6 +228,23 @@ html, body {
   -webkit-app-region: no-drag;
 }
 
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: #2e334d;
+  border-radius: 10px;
+}
+/*меняет цвет*/
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background-color: #565b7d;
+}
+
 .chat-msg {
   max-width: 100%;
   font-size: 12px;
