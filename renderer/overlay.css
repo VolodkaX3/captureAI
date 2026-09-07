@@ -349,8 +349,10 @@ html, body {
 
 #chat-illustration {
   /* было 140px */
-  max-width: 160px;
+  max-width: 250px;
   align-self: center;
   margin-top: 12px;
   pointer-events: none;
+  position: absolute;
+  transform: translateY(110px);
 }
