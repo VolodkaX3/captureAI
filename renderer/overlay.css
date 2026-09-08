@@ -61,7 +61,7 @@ html, body {
   background: transparent;
   cursor: pointer;
   -webkit-app-region: no-drag;
-  transition: transform 0.12s ease, filter 0.12s ease, margin 0.2s ease;
+  transition: transform 0.12s ease, filter 0.12s ease;/* margin 0.2s ease;*/
 }
 
 .icon-btn img {
@@ -70,11 +70,22 @@ html, body {
   display: block;
   border-radius: 50%;
 }
-
+/*
 .icon-btn:hover {
   transform: scale(1.1);
   filter: brightness(1.15);
   margin: 5px 0; 
+}
+*/
+
+#button-panel .icon-btn {
+  transition: transform 0.12s ease, filter 0.12s ease, margin 0.2s ease;
+}
+
+#button-panel .icon-btn:hover {
+  transform: scale(1.1);
+  filter: brightness(1.15);
+  margin: 5px 0; /* раздвигает только кнопки бокового меню */
 }
 
 .icon-btn:active {
@@ -149,6 +160,7 @@ html, body {
   color: #cfd3e6;
   font-size: 14px;
   line-height: 1;
+  margin: 0 !important; /*Чтобы крестик никуда не двигался*/
 }
 
 .settings-body {
