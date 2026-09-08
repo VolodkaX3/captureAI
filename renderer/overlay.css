@@ -61,7 +61,7 @@ html, body {
   background: transparent;
   cursor: pointer;
   -webkit-app-region: no-drag;
-  transition: transform 0.12s ease, filter 0.12s ease;
+  transition: transform 0.12s ease, filter 0.12s ease, margin 0.2s ease;
 }
 
 .icon-btn img {
@@ -74,6 +74,7 @@ html, body {
 .icon-btn:hover {
   transform: scale(1.1);
   filter: brightness(1.15);
+  margin: 5px 0; 
 }
 
 .icon-btn:active {
