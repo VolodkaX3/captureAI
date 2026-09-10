@@ -264,6 +264,7 @@ html, body {
   line-height: 1.5;
   border-left: 2px solid transparent;
   padding-left: 10px;
+  white-space: pre-wrap;
 }
 
 .chat-msg.user {

@@ -94,13 +94,30 @@ const chatInput = document.getElementById("chat-input");
 
 const chatEmptyState = document.getElementById('chat-empty-state');
 
+// Функция форматирования текста
+function formatMarkdown(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+}
+
 function addChatMessage(text, role) {
-  chatEmptyState.style.display = 'none'; // прячет и текст, и картинку разом
+  chatEmptyState.style.display = 'none';
 
   const bubble = document.createElement('div');
   bubble.className = `chat-msg ${role}`;
   bubble.dataset.role = role === 'user' ? 'you' : 'ai';
-  bubble.textContent = text;
+  
+  // Тут для ии применяеться, а для пользователся нет
+  if (role === 'ai') {
+    bubble.innerHTML = formatMarkdown(text);
+  } else {
+    bubble.textContent = text;
+  }
+
   chatMessages.appendChild(bubble);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
