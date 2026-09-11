@@ -6,6 +6,9 @@ const bg = document.querySelector("#bg");
 const selection = document.querySelector("#selection");
 const clickWrapper = document.querySelector("#clickWrapper");
 
+//из index.html
+const selectionPanel = document.querySelector("#selection-panel");
+
 const minSizeX = 50;
 const minSizeY = 50;
 
@@ -56,9 +59,11 @@ function endSelection() {
         selection.style.height = `${Math.abs(startY - endY)}px`;
         selection.style.top = `${startY}px`;
     }
+    selectionPanel.classList.remove("hidden");
 }
 
 clickWrapper.addEventListener("mousedown", event => {
+    selectionPanel.classList.add("hidden");
     const x = Math.min(event.clientX, bg.offsetWidth);
     const y = Math.min(event.clientY, bg.offsetHeight);
     if (isMouseDown) {
