@@ -63,6 +63,9 @@ function endSelection() {
 }
 
 clickWrapper.addEventListener("mousedown", event => {
+    
+    cutBtn?.classList.remove("active");
+
     selectionPanel.classList.add("hidden");
     const x = Math.min(event.clientX, bg.offsetWidth);
     const y = Math.min(event.clientY, bg.offsetHeight);
@@ -98,3 +101,29 @@ clickWrapper.addEventListener("mouseup", event => {
     endY = y;
     endSelection();
 })
+
+const cutBtn = document.querySelector("#cut-btn");
+function getCroppedCanvas (){
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const width = Math.abs(endX - startX);
+    const height = Math.abs(endY - startY);
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(bg, startX, startY, width, height, 0, 0, width, height);
+    return canvas;
+}
+
+cutBtn.addEventListener("click", () => {
+    const canvas = getCroppedCanvas();
+    canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        try {
+            const item = new ClipboardItem({ "image/png": blob });
+            await navigator.clipboard.write([item]);
+            cutBtn.classList.add("active");
+        } catch (err) {
+            console.error("Ошибка копирования:", err);
+        }
+    }, "image/png");
+});

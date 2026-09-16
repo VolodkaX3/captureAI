@@ -96,3 +96,7 @@ body{
 .action-btn:active {
     transform: scale(0.94);
 }
+
+#cut-btn.active {
+    filter: brightness(2);
+}
