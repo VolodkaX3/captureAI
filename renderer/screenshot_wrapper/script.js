@@ -123,7 +123,7 @@ cutBtn.addEventListener("click", () => {
             await navigator.clipboard.write([item]);
             cutBtn.classList.add("active");
         } catch (err) {
-            console.error("Ошибка копирования:", err);
+            console.error("Error width copy:", err);
         }
     }, "image/png");
 });
