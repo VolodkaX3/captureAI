@@ -11,7 +11,9 @@ let API_KEY;
 
 let ai;
 let history = [];
-const usingModel = "gemini-3.7-flash";
+const models = ["gemini-3.7-flash","gemini-3.5-flash-lite"];
+//Мною было добавлено даполнительную ии модель что бы в случае не сработки первой, дублировалось на вторую.
+//getResponse getResponseWithRetray
 
 function createOverlayWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -239,41 +241,33 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function getResponse(userMessage) {
-  console.log("response")
-  history.push({
-    role: "user",
-    parts: [{ text: userMessage }]
-  })
-
-  const response = await ai.models.generateContent({
-    model: usingModel,
-    contents: history
-  })
-
+async function getResponse(userMessage, model) {
+  const userMsg = {role: "user", parts: [{ text: userMessage}]};
+  const response = await ai.models.generateContent({ model: model, contents: [...history, userMsg]});
   const reply = response.text;
 
-  history.push({
-    role: "model",
-    parts: [{ text: reply }]
-  })
+  history.push(userMsg);
+  history.push({ role: "model", parts: [{ text: reply }] });
 
   return reply;
 }
 
 async function getResponseWithRetray(maxAttemptsAI, data) {
-  for (let attempt = 0; attempt <= maxAttemptsAI; attempt++) {
-    try {
-      return await getResponse(data);
-    } catch (err) {
-      if (attempt == 3) {
-        return `Error ${err.status}`;
-      } else {
-        console.warn(`Error. Waiting 700ms. Attempt ${attempt} from ${maxAttemptsAI}`);
-        await sleep(700);
+  for (const model of models) {
+    for (let attempt = 1; attempt <= maxAttemptsAI; attempt++) {
+      try {
+        return await getResponse(data, model);
+      } catch (err) {
+        console.warn(`${model}: error ${err.status}, attempt ${attempt} from ${maxAttemptsAI}`);
+        // 429 лимит этой модели
+        if (err.status == 429) break;
+        // все что не 500/503 повторять бессмысленно поетому вот так
+        if (err.status != 500 && err.status != 503) return `Error ${err.status}`;
+        await sleep(attempt * 1500);
       }
     }
   }
+  return "We have some problems with server, try again later...";
 }
 
 ipcMain.on("send-message-to-ai", async (event, data) => {
