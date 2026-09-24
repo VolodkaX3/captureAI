@@ -1,4 +1,4 @@
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenAI, ThinkingLevel } = require('@google/genai');
 const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
 const path = require('path');
 const fs = require("fs");
@@ -11,7 +11,11 @@ let API_KEY;
 
 let ai;
 let history = [];
-const models = ["gemini-3.7-flash","gemini-3.5-flash-lite"];
+const models = [
+  { name: "gemini-3.7-flash", thinkingLevel: ThinkingLevel.LOW },
+  { name: "gemini-3.5-flash-lite", thinkingLevel: ThinkingLevel.MINIMAL }
+];
+const MAX_HISTORY_MESSAGES = 12;
 //Мною было добавлено даполнительную ии модель что бы в случае не сработки первой, дублировалось на вторую.
 //getResponse getResponseWithRetray
 
@@ -97,7 +101,7 @@ app.whenReady().then(() => {
   try {
     const apiKeyPath = path.join(__dirname, "api_key.txt");
     const file = fs.readFileSync(apiKeyPath, "utf-8");
-    API_KEY = file;
+    API_KEY = file.trim();
     console.log("Api key file successfully read!");
     ai = new GoogleGenAI({ apiKey: API_KEY });
     console.log("AI initialization successfully")
@@ -241,29 +245,46 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function getResponse(userMessage, model) {
-  const userMsg = {role: "user", parts: [{ text: userMessage}]};
-  const response = await ai.models.generateContent({ model: model, contents: [...history, userMsg]});
-  const reply = response.text;
+async function getResponse(userMessage, modelCfg, onChunk) {
+  const userMsg = { role: "user", parts: [{ text: userMessage }] };
+  const stream = await ai.models.generateContentStream({
+    model: modelCfg.name,
+    contents: [...history, userMsg],
+    config: { thinkingConfig: { thinkingLevel: modelCfg.thinkingLevel } }
+  });
+
+  let reply = "";
+  for await (const chunk of stream) {
+    const text = chunk.text;
+    if (text) {
+      reply += text;
+      onChunk(text);
+    }
+  }
 
   history.push(userMsg);
   history.push({ role: "model", parts: [{ text: reply }] });
-
+  if (history.length > MAX_HISTORY_MESSAGES) {
+    history = history.slice(-MAX_HISTORY_MESSAGES);
+  }
   return reply;
 }
 
-async function getResponseWithRetray(maxAttemptsAI, data) {
-  for (const model of models) {
+async function getResponseWithRetray(maxAttemptsAI, data, onChunk) {
+  let started = false;
+  const emit = text => { started = true; onChunk(text); };
+
+  for (const modelCfg of models) {
     for (let attempt = 1; attempt <= maxAttemptsAI; attempt++) {
       try {
-        return await getResponse(data, model);
+        await getResponse(data, modelCfg, emit);
+        return null;
       } catch (err) {
-        console.warn(`${model}: error ${err.status}, attempt ${attempt} from ${maxAttemptsAI}`);
-        // 429 лимит этой модели
+        console.warn(`${modelCfg.name}: error ${err.status}, attempt ${attempt} from ${maxAttemptsAI}`);
+        if (started) return "\n\n…(connection lost)";
         if (err.status == 429) break;
-        // все что не 500/503 повторять бессмысленно поетому вот так
         if (err.status != 500 && err.status != 503) return `Error ${err.status}`;
-        await sleep(attempt * 1500);
+        await sleep(attempt * 500);
       }
     }
   }
@@ -271,9 +292,11 @@ async function getResponseWithRetray(maxAttemptsAI, data) {
 }
 
 ipcMain.on("send-message-to-ai", async (event, data) => {
-  const maxAttemptsAI = 3;
-  const reply = await getResponseWithRetray(maxAttemptsAI, data);
-
-  overlayWindow.webContents.send("reply-from-ai", reply);
+  const maxAttemptsAI = 2;
+  const send = (channel, payload) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.webContents.send(channel, payload);
+  };
+  const tail = await getResponseWithRetray(maxAttemptsAI, data, text => send("reply-chunk", text));
+  send("reply-end", tail);
 })
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

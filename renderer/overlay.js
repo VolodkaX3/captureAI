@@ -137,3 +137,30 @@ chatForm.addEventListener('submit', async (e) => {
 window.api.onReplyFromAI(data => {
   addChatMessage(data, "ai");
 })
+
+let streamBubble = null;
+let streamText = "";
+
+window.api.onReplyChunk(chunk => {
+  if (!streamBubble) {
+    addChatMessage("", "ai");
+    streamBubble = chatMessages.lastElementChild;
+    streamText = "";
+  }
+  streamText += chunk;
+  streamBubble.innerHTML = formatMarkdown(streamText);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+window.api.onReplyEnd(tail => {
+  if (tail) {
+    if (streamBubble) {
+      streamText += tail;
+      streamBubble.innerHTML = formatMarkdown(streamText);
+    } else {
+      addChatMessage(tail, "ai");
+    }
+  }
+  streamBubble = null;
+  streamText = "";
+});

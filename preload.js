@@ -11,7 +11,11 @@ contextBridge.exposeInMainWorld('api', {
   // chat
   newChat: () => ipcRenderer.send("new-chat"),
   sendMessageToAI: data => ipcRenderer.send("send-message-to-ai", data),
-  onReplyFromAI: callback => ipcRenderer.on("reply-from-ai", (event, data) => callback(data))
+  onReplyFromAI: callback => ipcRenderer.on("reply-from-ai", (event, data) => callback(data)),
+  
+  //onReplyFromAI: callback => ipcRenderer.on("reply-from-ai", (event, data) => callback(data)),
+  onReplyChunk: callback => ipcRenderer.on("reply-chunk", (event, data) => callback(data)),
+  onReplyEnd: callback => ipcRenderer.on("reply-end", (event, data) => callback(data))
 });
 
 
