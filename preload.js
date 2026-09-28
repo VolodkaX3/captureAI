@@ -15,7 +15,14 @@ contextBridge.exposeInMainWorld('api', {
   
   //onReplyFromAI: callback => ipcRenderer.on("reply-from-ai", (event, data) => callback(data)),
   onReplyChunk: callback => ipcRenderer.on("reply-chunk", (event, data) => callback(data)),
-  onReplyEnd: callback => ipcRenderer.on("reply-end", (event, data) => callback(data))
+  onReplyEnd: callback => ipcRenderer.on("reply-end", (event, data) => callback(data)),
+
+  // AI panel
+  toggleAiPanel: pos => ipcRenderer.send("toggle-ai-panel", pos),
+  aiPanelMove: pos => ipcRenderer.send("ai-panel-move", pos),
+  aiPanelClose: () => ipcRenderer.send("ai-panel-close"),
+  aiPanelReady: () => ipcRenderer.send("ai-panel-ready"),
+  onAiScene: callback => ipcRenderer.on("ai-scene", (event, data) => callback(data))
 });
 
 

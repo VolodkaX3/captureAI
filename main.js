@@ -163,7 +163,7 @@ function updateScreenshotWinPosition() {
   }
   
   workingImage = null;
-
+  closeAiPanelWindow();
   screenshotWin.destroy();
   screenshotWin = null;
 }
@@ -226,6 +226,7 @@ ipcMain.on("make-screenshot", () => {
     overlayWindow.once("hide", async () => {
       const capture = await desktopCapture();
       workingImage = capture.img;
+      lastCaptureDataUrl = capture.htmlDataUrl;
       screenshotWin.show();
       screenshotWin.webContents.send("screenshot-capture", capture.htmlDataUrl);
     })
@@ -300,3 +301,94 @@ ipcMain.on("send-message-to-ai", async (event, data) => {
   send("reply-end", tail);
 })
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//AI-PANELKA 
+const AI_PANEL_W = 270;
+const AI_PANEL_H = 380;
+const AI_PAD = 28; // прозрачное поле вокруг панели
+
+let aiPanelWin = null;
+let lastCaptureDataUrl = null;
+
+// pos — левый верхний угол ОКНА
+function clampAiWinPos(x, y) {
+  const b = screen.getPrimaryDisplay().bounds;
+  return {
+    x: Math.round(Math.max(b.x - AI_PAD, Math.min(x, b.x + b.width - AI_PANEL_W - AI_PAD))),
+    y: Math.round(Math.max(b.y - AI_PAD, Math.min(y, b.y + b.height - AI_PANEL_H - AI_PAD)))
+  };
+}
+
+function setAiWinPos(x, y) {
+  const p = clampAiWinPos(x, y);
+  aiPanelWin.setBounds({ x: p.x, y: p.y, width: AI_PANEL_W + AI_PAD * 2, height: AI_PANEL_H + AI_PAD * 2 });
+}
+
+function closeAiPanelWindow() {
+  if (aiPanelWin && !aiPanelWin.isDestroyed()) aiPanelWin.destroy();
+  aiPanelWin = null;
+}
+
+function createAiPanelWindow(panelX, panelY) {
+  const p = clampAiWinPos(panelX - AI_PAD, panelY - AI_PAD);
+  const win = new BrowserWindow({
+    width: AI_PANEL_W + AI_PAD * 2,
+    height: AI_PANEL_H + AI_PAD * 2,
+    x: p.x,
+    y: p.y,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    hasShadow: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    fullscreenable: false,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  aiPanelWin = win;
+  win.setAlwaysOnTop(true, "screen-saver");
+  win.setMenuBarVisibility(false);
+  win.loadFile(path.join(__dirname, "renderer", "ai_panel", "index.html"));
+
+  win.webContents.once("did-finish-load", () => {
+    const b = screen.getPrimaryDisplay().bounds;
+    win.webContents.send("ai-scene", {
+      dataUrl: lastCaptureDataUrl,
+      displayW: b.width,
+      displayH: b.height,
+      originX: b.x,
+      originY: b.y
+    });
+  });
+  win.on("closed", () => { if (aiPanelWin === win) aiPanelWin = null; });
+}
+
+const aiPanelAlive = () => aiPanelWin && !aiPanelWin.isDestroyed();
+const isNum = n => typeof n === "number" && Number.isFinite(n);
+
+ipcMain.on("toggle-ai-panel", (event, pos) => {
+  if (aiPanelAlive()) {
+    if (aiPanelWin.isVisible()) aiPanelWin.hide();
+    else aiPanelWin.show();
+    return;
+  }
+  if (!pos || !isNum(pos.x) || !isNum(pos.y)) return;
+  createAiPanelWindow(pos.x, pos.y);
+});
+
+ipcMain.on("ai-panel-ready", () => {
+  if (aiPanelAlive()) aiPanelWin.show();
+});
+
+ipcMain.on("ai-panel-move", (event, pos) => {
+  if (aiPanelAlive() && pos && isNum(pos.x) && isNum(pos.y)) setAiWinPos(pos.x, pos.y);
+});
+
+ipcMain.on("ai-panel-close", () => {
+  if (aiPanelAlive()) aiPanelWin.hide();
+});

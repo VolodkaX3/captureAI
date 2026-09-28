@@ -127,3 +127,16 @@ cutBtn.addEventListener("click", () => {
         }
     }, "image/png");
 });
+
+document.querySelector("#search-btn").addEventListener("click", () => {
+    const GAP = 12;
+    const SIDE_PANEL_W = 64;
+    const PANEL_W = 270;
+    const r = selection.getBoundingClientRect();
+    const border = (window.outerWidth - window.innerWidth) / 2;
+    const contentX = window.screenX + border;
+    const contentY = window.screenY + (window.outerHeight - window.innerHeight - border);
+    let x = contentX + r.right + GAP + SIDE_PANEL_W + GAP;
+    if (x + PANEL_W > window.screen.width - GAP) x = contentX + r.left - GAP - PANEL_W;
+    window.api.toggleAiPanel({ x, y: contentY + r.top });
+});
