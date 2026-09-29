@@ -1,5 +1,5 @@
 const { GoogleGenAI, ThinkingLevel } = require('@google/genai');
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu, desktopCapturer } = require('electron');
 const path = require('path');
 const fs = require("fs");
 const screenshot = require("screenshot-desktop");
@@ -353,6 +353,7 @@ function createAiPanelWindow(panelX, panelY) {
   aiPanelWin = win;
   win.setAlwaysOnTop(true, "screen-saver");
   win.setMenuBarVisibility(false);
+  win.setContentProtection(true);
   win.loadFile(path.join(__dirname, "renderer", "ai_panel", "index.html"));
 
   win.webContents.once("did-finish-load", () => {
@@ -391,4 +392,17 @@ ipcMain.on("ai-panel-move", (event, pos) => {
 
 ipcMain.on("ai-panel-close", () => {
   if (aiPanelAlive()) aiPanelWin.hide();
+});
+
+//для живого захвата экрана
+ipcMain.handle("get-desktop-source-id", async () => {
+  try {
+    const primary = screen.getPrimaryDisplay();
+    const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 0, height: 0 } });
+    const match = sources.find(s => String(s.display_id) === String(primary.id));
+    return (match || sources[0])?.id || null;
+  } catch (err) {
+    console.error("desktopCapturer error:", err);
+    return null;
+  }
 });
