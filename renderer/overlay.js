@@ -71,6 +71,9 @@ function openChat(){
   chatPanel.classList.add("opening");
   window.api.newChat();
   chatMessages.querySelectorAll(".chat-msg").forEach(element => element.remove())
+  typingBubble = null;
+  streamBubble = null;
+  streamText = "";
 }
 
 function closeChat(){
@@ -122,12 +125,26 @@ function addChatMessage(text, role) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+let typingBubble = null;
+
+function showTypingIndicator() {
+  chatEmptyState.style.display = 'none';
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-msg ai loading';
+  bubble.dataset.role = 'ai';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  chatMessages.appendChild(bubble);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  typingBubble = bubble;
+}
+
 chatForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = chatInput.value.trim();
   if (!text) return;
   addChatMessage(text, 'user');
   chatInput.value = '';
+  showTypingIndicator();
   window.api.sendMessageToAI(text);
   //
   // const reply = await window.api.sendChatMessage(text);
@@ -143,8 +160,15 @@ let streamText = "";
 
 window.api.onReplyChunk(chunk => {
   if (!streamBubble) {
-    addChatMessage("", "ai");
-    streamBubble = chatMessages.lastElementChild;
+    if (typingBubble) {
+      streamBubble = typingBubble;
+      streamBubble.classList.remove('loading');
+      streamBubble.innerHTML = '';
+      typingBubble = null;
+    } else {
+      addChatMessage("", "ai");
+      streamBubble = chatMessages.lastElementChild;
+    }
     streamText = "";
   }
   streamText += chunk;
@@ -153,6 +177,12 @@ window.api.onReplyChunk(chunk => {
 });
 
 window.api.onReplyEnd(tail => {
+  if (typingBubble) {
+    typingBubble.classList.remove('loading');
+    typingBubble.innerHTML = '';
+    streamBubble = typingBubble;
+    typingBubble = null;
+  }
   if (tail) {
     if (streamBubble) {
       streamText += tail;
