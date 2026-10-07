@@ -19,16 +19,46 @@ const MAX_HISTORY_MESSAGES = 12;
 //Мною было добавлено даполнительную ии модель что бы в случае не сработки первой, дублировалось на вторую.
 //getResponse getResponseWithRetray
 
+// функция чтобы при следуйщем открытии окно открывалось в том же месте
+function overlayWindowSettingsPath() {
+  return path.join(app.getPath("userData"), "overlayWindowSettings.json");
+}
+
+function saveOverlayWindowPosition() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const [x, y] = overlayWindow.getPosition();
+  try {
+    fs.writeFileSync(overlayWindowSettingsPath(), JSON.stringify({ x, y }, null, 2), "utf-8");
+  } catch (err) {
+    console.error(`Error in updating overlay window settings: ${err.message}`);
+  }
+}
+
 function createOverlayWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     const winWidth = 514; // +64px боковая панель + 10px отступ
   const winHeight = 380;
 
+  let savedPos = null;
+  try {
+    const filePath = overlayWindowSettingsPath();
+    if (fs.existsSync(filePath)) {
+      const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      //проверка что окно влезет
+      if (typeof data.x === "number" && typeof data.y === "number" &&
+          data.x >= 0 && data.y >= 0 && data.x <= width - 50 && data.y <= height - 50) {
+        savedPos = data;
+      }
+    }
+  } catch (err) {
+    console.log(`Error in reading overlay window settings: ${err.message}`);
+  }
+
   overlayWindow = new BrowserWindow({
     width: winWidth,
     height: winHeight,
-    x: Math.round((width - winWidth) / 2),
-    y: Math.round((height - winHeight) / 2) - 40,
+    x: savedPos ? savedPos.x : Math.round((width - winWidth) / 2),
+    y: savedPos ? savedPos.y : Math.round((height - winHeight) / 2) - 40,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -47,6 +77,7 @@ function createOverlayWindow() {
   overlayWindow.setAlwaysOnTop(true, 'screen-saver');
   // overlayWindow.webContents.openDevTools();
 
+  overlayWindow.on('hide', saveOverlayWindowPosition);
 
   overlayWindow.on('blur', () => {
     if (overlayWindow && !overlayWindow.webContents.isDevToolsOpened()) {
@@ -392,6 +423,19 @@ ipcMain.on("ai-panel-move", (event, pos) => {
 
 ipcMain.on("ai-panel-close", () => {
   if (aiPanelAlive()) aiPanelWin.hide();
+});
+
+ipcMain.on("ai-panel-screenshot", async () => {
+  if (!aiPanelAlive()) return;
+  try {
+    const image = await aiPanelWin.webContents.capturePage();
+    const fileName = `ai-panel-${Date.now()}.png`;
+    const filePath = path.join(app.getPath("desktop"), fileName);
+    fs.writeFileSync(filePath, image.toPNG());
+    console.log(`AI panel screenshot saved: ${filePath}`);
+  } catch (err) {
+    console.error(`Error in making AI panel screenshot: ${err.message}`);
+  }
 });
 
 //для живого захвата экрана

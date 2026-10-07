@@ -145,3 +145,10 @@ front.addEventListener("pointercancel", endDrag);
 document.addEventListener("keydown", e => {
     if (e.key === "Escape") window.api.aiPanelClose();
 });
+// чтобы можно было фоткать иипанель
+document.addEventListener("keydown", e => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        window.api.capturePanelScreenshot();
+    }
+});

@@ -23,7 +23,8 @@ contextBridge.exposeInMainWorld('api', {
   aiPanelClose: () => ipcRenderer.send("ai-panel-close"),
   aiPanelReady: () => ipcRenderer.send("ai-panel-ready"),
   onAiScene: callback => ipcRenderer.on("ai-scene", (event, data) => callback(data)),
-  getDesktopSourceId: () => ipcRenderer.invoke("get-desktop-source-id")
+  getDesktopSourceId: () => ipcRenderer.invoke("get-desktop-source-id"),
+  capturePanelScreenshot: () => ipcRenderer.send("ai-panel-screenshot")
 });
 
 

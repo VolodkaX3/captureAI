@@ -1,3 +1,4 @@
+import { createLayout } from "https://cdn.jsdelivr.net/npm/animejs@4.5.0/+esm";
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     window.api.hideOverlay();
@@ -69,11 +70,6 @@ const chatPanel = document.getElementById('chat-panel');
 function openChat(){
   chatPanel.classList.remove("hidden", "closing");
   chatPanel.classList.add("opening");
-  window.api.newChat();
-  chatMessages.querySelectorAll(".chat-msg").forEach(element => element.remove())
-  typingBubble = null;
-  streamBubble = null;
-  streamText = "";
 }
 
 function closeChat(){
@@ -97,6 +93,47 @@ const chatInput = document.getElementById("chat-input");
 
 const chatEmptyState = document.getElementById('chat-empty-state');
 
+const messagesLayout = createLayout(chatMessages, {
+  duration: 220,
+  ease: "outQuad",
+  enterFrom: {
+    transform: "translateY(16px) scale(.96)",
+    opacity: 0,
+    duration: 280,
+    ease: "out(3)"
+  }
+});
+
+function appendToChat(node) {
+  messagesLayout.update(({ root }) => { root.appendChild(node); });
+  return node;
+}
+
+//Сохранённая история чата
+const CHAT_HISTORY_KEY = "captureai_chat_history";
+const CHAT_HISTORY_LIMIT = 60; //лимит сохраненных сообщений
+
+function loadChatLog() {
+  try {
+    const raw = localStorage.getItem(CHAT_HISTORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn("Не удалось прочитать сохранённую историю чата:", err);
+    return [];
+  }
+}
+
+function saveChatLog() {
+  try {
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatLog.slice(-CHAT_HISTORY_LIMIT)));
+  } catch (err) {
+    console.warn("Не удалось сохранить историю чата:", err);
+  }
+}
+
+let chatLog = loadChatLog();
+
 // Функция форматирования текста
 function formatMarkdown(text) {
   if (!text) return '';
@@ -107,22 +144,36 @@ function formatMarkdown(text) {
     .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 }
 
-function addChatMessage(text, role) {
+function renderMessage(text, role) {
   chatEmptyState.style.display = 'none';
 
   const bubble = document.createElement('div');
   bubble.className = `chat-msg ${role}`;
   bubble.dataset.role = role === 'user' ? 'you' : 'ai';
-  
-  // Тут для ии применяеться, а для пользователся нет
+
   if (role === 'ai') {
     bubble.innerHTML = formatMarkdown(text);
   } else {
     bubble.textContent = text;
   }
 
-  chatMessages.appendChild(bubble);
+  appendToChat(bubble);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  return bubble;
+}
+
+function addChatMessage(text, role) {
+  const bubble = renderMessage(text, role);
+  chatLog.push({ role, text });
+  saveChatLog();
+  return bubble;
+}
+
+// восстанавливаем сохранённую историю при запуске приложения
+for (const entry of chatLog) {
+  if (entry && typeof entry.text === "string" && (entry.role === "user" || entry.role === "ai")) {
+    renderMessage(entry.text, entry.role);
+  }
 }
 
 let typingBubble = null;
@@ -133,7 +184,7 @@ function showTypingIndicator() {
   bubble.className = 'chat-msg ai loading';
   bubble.dataset.role = 'ai';
   bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
-  chatMessages.appendChild(bubble);
+  appendToChat(bubble);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   typingBubble = bubble;
 }
@@ -155,25 +206,31 @@ window.api.onReplyFromAI(data => {
   addChatMessage(data, "ai");
 })
 
+// текст дописывается по мере прихода
 let streamBubble = null;
 let streamText = "";
+let streamLogEntry = null; // запись в chatLog которая обновляеться
 
 window.api.onReplyChunk(chunk => {
   if (!streamBubble) {
     if (typingBubble) {
+      //тот же элемент без пересоздания
       streamBubble = typingBubble;
       streamBubble.classList.remove('loading');
       streamBubble.innerHTML = '';
       typingBubble = null;
     } else {
-      addChatMessage("", "ai");
-      streamBubble = chatMessages.lastElementChild;
+      streamBubble = renderMessage("", "ai");
     }
     streamText = "";
+    streamLogEntry = { role: "ai", text: "" };
+    chatLog.push(streamLogEntry);
   }
   streamText += chunk;
   streamBubble.innerHTML = formatMarkdown(streamText);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  streamLogEntry.text = streamText;
+  saveChatLog();
 });
 
 window.api.onReplyEnd(tail => {
@@ -187,10 +244,14 @@ window.api.onReplyEnd(tail => {
     if (streamBubble) {
       streamText += tail;
       streamBubble.innerHTML = formatMarkdown(streamText);
+      if (!streamLogEntry) { streamLogEntry = { role: "ai", text: "" }; chatLog.push(streamLogEntry); }
+      streamLogEntry.text = streamText;
     } else {
       addChatMessage(tail, "ai");
     }
   }
+  saveChatLog();
   streamBubble = null;
   streamText = "";
+  streamLogEntry = null;
 });
