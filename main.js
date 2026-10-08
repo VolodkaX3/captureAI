@@ -431,8 +431,7 @@ const isNum = n => typeof n === "number" && Number.isFinite(n);
 
 ipcMain.on("toggle-ai-panel", (event, pos) => {
   if (aiPanelAlive()) {
-    if (aiPanelWin.isVisible()) aiPanelWin.hide();
-    else aiPanelWin.show();
+    closeAiPanelWindow();
     return;
   }
   if (!pos || !isNum(pos.x) || !isNum(pos.y)) return;
@@ -448,5 +447,5 @@ ipcMain.on("ai-panel-move", (event, pos) => {
 });
 
 ipcMain.on("ai-panel-close", () => {
-  if (aiPanelAlive()) aiPanelWin.hide();
+  closeAiPanelWindow();
 });

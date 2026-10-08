@@ -101,3 +101,114 @@ html, body {
 
 .send:hover { transform: scale(1.08); }
 .send:active { transform: scale(0.94); }
+
+/*верхний ряд кнопок на панеле*/
+.top-row {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+}
+
+.round-btn,
+.pill-btn {
+    height: 30px;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+/* additional: 30x30 7177AC (в открытом состоянии 8C71AC) */
+.round-btn {
+    width: 30px;
+    border-radius: 50%;
+    background: #7177AC;
+}
+
+.round-btn.open {
+    background: #8C71AC;
+}
+
+.round-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+/* download: 44x30 7177AC */
+.pill-btn {
+    width: 44px;
+    border-radius: 15px;
+    background: #7177AC;
+}
+
+.pill-btn img {
+    width: 24px;
+    height: 24px;
+    display: block;
+    -webkit-user-drag: none;
+}
+.pill-btn.active{
+    background: #8C71AC;
+}
+
+.round-btn:hover, .pill-btn:hover { filter: brightness(1.15); }
+.round-btn:active, .pill-btn:active { filter: brightness(0.9); }
+
+.menu {
+    position: absolute;
+    left: 15px;
+    top: 54px;
+    width: 118px;
+    box-sizing: border-box;
+    padding: 5px;
+    background: #f3f3f3;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    cursor: default;
+    z-index: 5;
+}
+
+.menu[hidden] { display: none; }
+
+.menu-item {
+    height: 24px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 8px;
+    color: #000;
+    font: 500 12.5px/1 "Segoe UI", system-ui, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.menu-item .check {
+    width: 12px;
+    height: 12px;
+    flex: none;
+    visibility: hidden;
+}
+
+.menu-item.checked .check { visibility: visible; }
+
+.menu-item .label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.menu-item:hover {
+    background: #7177AC;
+    color: #fff;
+}
+
+.menu-item:hover .check path { stroke: #fff; }
