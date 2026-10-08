@@ -1,5 +1,5 @@
 const { GoogleGenAI, ThinkingLevel } = require('@google/genai');
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu, desktopCapturer } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, Menu } = require('electron');
 const path = require('path');
 const fs = require("fs");
 const screenshot = require("screenshot-desktop");
@@ -178,7 +178,6 @@ ipcMain.on('hide-overlay', () => {
   if (overlayWindow) overlayWindow.hide();
 });
 
-
 // screenshot
 function updateScreenshotWinPosition() {
   const [x, y] = screenshotWin.getPosition();
@@ -272,6 +271,33 @@ ipcMain.on("make-screenshot", () => {
 ipcMain.on("new-chat", () => {
   history = [];
 })
+const CHAT_HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000; // хранить неделю
+function chatHistoryPath() {
+  return path.join(app.getPath("userData"), "chatHistory.json");
+}
+
+ipcMain.handle("load-chat-history", () => {
+  try {
+    const filePath = chatHistoryPath();
+    if (!fs.existsSync(filePath)) return [];
+    const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    if (!Array.isArray(data)) return [];
+    const cutoff = Date.now() - CHAT_HISTORY_TTL_MS;
+    return data.filter(m => m && typeof m.ts === "number" && m.ts >= cutoff);
+  } catch (err) {
+    console.error(`Error in reading chat history: ${err.message}`);
+    return [];
+  }
+});
+
+ipcMain.on("save-chat-history", (event, log) => {
+  if (!Array.isArray(log)) return;
+  try {
+    fs.writeFileSync(chatHistoryPath(), JSON.stringify(log, null, 2), "utf-8");
+  } catch (err) {
+    console.error(`Error in saving chat history: ${err.message}`);
+  }
+});
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -384,7 +410,7 @@ function createAiPanelWindow(panelX, panelY) {
   aiPanelWin = win;
   win.setAlwaysOnTop(true, "screen-saver");
   win.setMenuBarVisibility(false);
-  win.setContentProtection(true);
+  //win.setContentProtection(true);
   win.loadFile(path.join(__dirname, "renderer", "ai_panel", "index.html"));
 
   win.webContents.once("did-finish-load", () => {
@@ -423,30 +449,4 @@ ipcMain.on("ai-panel-move", (event, pos) => {
 
 ipcMain.on("ai-panel-close", () => {
   if (aiPanelAlive()) aiPanelWin.hide();
-});
-
-ipcMain.on("ai-panel-screenshot", async () => {
-  if (!aiPanelAlive()) return;
-  try {
-    const image = await aiPanelWin.webContents.capturePage();
-    const fileName = `ai-panel-${Date.now()}.png`;
-    const filePath = path.join(app.getPath("desktop"), fileName);
-    fs.writeFileSync(filePath, image.toPNG());
-    console.log(`AI panel screenshot saved: ${filePath}`);
-  } catch (err) {
-    console.error(`Error in making AI panel screenshot: ${err.message}`);
-  }
-});
-
-//для живого захвата экрана
-ipcMain.handle("get-desktop-source-id", async () => {
-  try {
-    const primary = screen.getPrimaryDisplay();
-    const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 0, height: 0 } });
-    const match = sources.find(s => String(s.display_id) === String(primary.id));
-    return (match || sources[0])?.id || null;
-  } catch (err) {
-    console.error("desktopCapturer error:", err);
-    return null;
-  }
 });

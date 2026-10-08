@@ -110,14 +110,12 @@ function appendToChat(node) {
 }
 
 //Сохранённая история чата
-const CHAT_HISTORY_KEY = "captureai_chat_history";
 const CHAT_HISTORY_LIMIT = 60; //лимит сохраненных сообщений
 
-function loadChatLog() {
+async function loadChatLog() {
   try {
-    const raw = localStorage.getItem(CHAT_HISTORY_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const data = await window.api.loadChatHistory();
+    return Array.isArray(data) ? data : [];
   } catch (err) {
     console.warn("Не удалось прочитать сохранённую историю чата:", err);
     return [];
@@ -125,14 +123,9 @@ function loadChatLog() {
 }
 
 function saveChatLog() {
-  try {
-    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatLog.slice(-CHAT_HISTORY_LIMIT)));
-  } catch (err) {
-    console.warn("Не удалось сохранить историю чата:", err);
-  }
+  window.api.saveChatHistory(chatLog.slice(-CHAT_HISTORY_LIMIT));
 }
-
-let chatLog = loadChatLog();
+let chatLog = await loadChatLog();
 
 // Функция форматирования текста
 function formatMarkdown(text) {
@@ -164,7 +157,7 @@ function renderMessage(text, role) {
 
 function addChatMessage(text, role) {
   const bubble = renderMessage(text, role);
-  chatLog.push({ role, text });
+  chatLog.push({ role, text, ts: Date.now() });
   saveChatLog();
   return bubble;
 }
@@ -223,7 +216,7 @@ window.api.onReplyChunk(chunk => {
       streamBubble = renderMessage("", "ai");
     }
     streamText = "";
-    streamLogEntry = { role: "ai", text: "" };
+    streamLogEntry = { role: "ai", text: "", ts: Date.now() };
     chatLog.push(streamLogEntry);
   }
   streamText += chunk;
@@ -244,7 +237,7 @@ window.api.onReplyEnd(tail => {
     if (streamBubble) {
       streamText += tail;
       streamBubble.innerHTML = formatMarkdown(streamText);
-      if (!streamLogEntry) { streamLogEntry = { role: "ai", text: "" }; chatLog.push(streamLogEntry); }
+      if (!streamLogEntry) { streamLogEntry = { role: "ai", text: "", ts: Date.now() }; chatLog.push(streamLogEntry); }
       streamLogEntry.text = streamText;
     } else {
       addChatMessage(tail, "ai");

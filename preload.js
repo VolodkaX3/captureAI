@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('api', {
   newChat: () => ipcRenderer.send("new-chat"),
   sendMessageToAI: data => ipcRenderer.send("send-message-to-ai", data),
   onReplyFromAI: callback => ipcRenderer.on("reply-from-ai", (event, data) => callback(data)),
+  loadChatHistory: () => ipcRenderer.invoke("load-chat-history"),
+  saveChatHistory: log => ipcRenderer.send("save-chat-history", log),
   
   //onReplyFromAI: callback => ipcRenderer.on("reply-from-ai", (event, data) => callback(data)),
   onReplyChunk: callback => ipcRenderer.on("reply-chunk", (event, data) => callback(data)),
@@ -22,9 +24,7 @@ contextBridge.exposeInMainWorld('api', {
   aiPanelMove: pos => ipcRenderer.send("ai-panel-move", pos),
   aiPanelClose: () => ipcRenderer.send("ai-panel-close"),
   aiPanelReady: () => ipcRenderer.send("ai-panel-ready"),
-  onAiScene: callback => ipcRenderer.on("ai-scene", (event, data) => callback(data)),
-  getDesktopSourceId: () => ipcRenderer.invoke("get-desktop-source-id"),
-  capturePanelScreenshot: () => ipcRenderer.send("ai-panel-screenshot")
+  onAiScene: callback => ipcRenderer.on("ai-scene", (event, data) => callback(data))
 });
 
 
