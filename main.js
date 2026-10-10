@@ -3,6 +3,7 @@ const { app, BrowserWindow, globalShortcut, ipcMain, screen, Tray, nativeImage, 
 const path = require('path');
 const fs = require("fs");
 const screenshot = require("screenshot-desktop");
+const sharp = require("sharp");
 
 let overlayWindow = null;
 let splashWindow = null;
@@ -267,6 +268,34 @@ ipcMain.on("make-screenshot", () => {
     event.preventDefault();
   })
 })
+
+let croppedImage = null;
+
+ipcMain.handle("cut-selection", async (event, r) => {
+  if (!workingImage) return null;
+  try {
+    const meta = await sharp(workingImage).metadata();
+    const kx = meta.width / r.viewW;
+    const ky = meta.height / r.viewH;
+
+    const left = Math.max(0, Math.round(r.x * kx));
+    const top = Math.max(0, Math.round(r.y * ky));
+    const width = Math.min(meta.width - left, Math.round(r.width * kx));
+    const height = Math.min(meta.height - top, Math.round(r.height * ky));
+    if (width < 1 || height < 1) return null;
+
+    croppedImage = await sharp(workingImage)
+      .extract({ left, top, width, height })
+      .png()
+      .toBuffer();
+
+    return croppedImage;
+  } catch (err) {
+    console.error(`Error in cutting selection: ${err.message}`);
+    return null;
+  }
+});
+
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ipcMain.on("new-chat", () => {
   history = [];

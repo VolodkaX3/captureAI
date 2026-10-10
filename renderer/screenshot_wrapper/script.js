@@ -103,29 +103,25 @@ clickWrapper.addEventListener("mouseup", event => {
 })
 
 const cutBtn = document.querySelector("#cut-btn");
-function getCroppedCanvas (){
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const width = Math.abs(endX - startX);
-    const height = Math.abs(endY - startY);
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(bg, startX, startY, width, height, 0, 0, width, height);
-    return canvas;
-}
 
-cutBtn.addEventListener("click", () => {
-    const canvas = getCroppedCanvas();
-    canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        try {
-            const item = new ClipboardItem({ "image/png": blob });
-            await navigator.clipboard.write([item]);
-            cutBtn.classList.add("active");
-        } catch (err) {
-            console.error("Error width copy:", err);
-        }
-    }, "image/png");
+cutBtn.addEventListener("click", async () => {
+    const png = await window.api.cutSelection({
+        x: Math.min(startX, endX),
+        y: Math.min(startY, endY),
+        width: Math.abs(endX - startX),
+        height: Math.abs(endY - startY),
+        viewW: bg.offsetWidth,
+        viewH: bg.offsetHeight
+    });
+    if (!png) return;
+
+    try {
+        const blob = new Blob([png], { type: "image/png" });
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        cutBtn.classList.add("active");
+    } catch (err) {
+        console.error("Error width copy:", err);
+    }
 });
 
 document.querySelector("#search-btn").addEventListener("click", () => {

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   // screenshot
   makeScreenshot: () => ipcRenderer.send("make-screenshot"),
   onScreenshotCapture: callback => ipcRenderer.on("screenshot-capture", (event, data) => callback(data)),
+  cutSelection: rect => ipcRenderer.invoke("cut-selection", rect),
 
   // chat
   newChat: () => ipcRenderer.send("new-chat"),
