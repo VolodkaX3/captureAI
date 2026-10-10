@@ -1,3 +1,4 @@
+import hljs from "../node_modules/@highlightjs/cdn-assets/es/highlight.min.js";
 import { createLayout } from "https://cdn.jsdelivr.net/npm/animejs@4.5.0/+esm";
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
@@ -128,13 +129,44 @@ function saveChatLog() {
 let chatLog = await loadChatLog();
 
 // Функция форматирования текста
+//у нас есть поиск но еесли ии не указал а такое может случиться то оно подбираеться само
+const AUTO_LANGS = ["javascript", "typescript", "python", "html", "css", "json", "bash", "java", "cpp", "csharp", "sql"];
+const escHtml = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function highlightCode(code, lang) {
+  try {
+    if (lang && hljs.getLanguage(lang)) {
+      return { html: hljs.highlight(code, { language: lang, ignoreIllegals: true }).value, lang };
+    }
+    const r = hljs.highlightAuto(code, AUTO_LANGS);
+    return { html: r.value, lang: r.language || "" };
+  } catch {
+    return { html: escHtml(code), lang: "" };
+  }
+}
+
 function formatMarkdown(text) {
-  if (!text) return '';
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  if (!text) return "";
+
+  const blocks = [];
+  let out = text.replace(/```([^\n`]*)\n?([\s\S]*?)(?:```\n?|$)/g, (_, info, code) => {
+    blocks.push({ code: code.replace(/\n$/, ""), lang: info.trim().toLowerCase() });
+    return `\u0000${blocks.length - 1}\u0000`;
+  });
+
+  out = escHtml(out)
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+
+  return out.replace(/\u0000(\d+)\u0000/g, (_, i) => {
+    const { code, lang } = blocks[i];
+    const h = highlightCode(code, lang);
+    return `<div class="code-block">` +
+             `<div class="code-head"><span class="code-lang">${escHtml(h.lang)}</span>` +
+             `<button class="code-copy" type="button">Copy</button></div>` +
+             `<pre><code class="hljs">${h.html}</code></pre>` +
+           `</div>`;
+  });
 }
 
 function renderMessage(text, role) {
@@ -154,6 +186,19 @@ function renderMessage(text, role) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
   return bubble;
 }
+
+chatMessages.addEventListener("click", async e => {
+  const btn = e.target.closest(".code-copy");
+  if (!btn) return;
+  const code = btn.closest(".code-block").querySelector("code").textContent;
+  try {
+    await navigator.clipboard.writeText(code);
+    btn.textContent = "Copied";
+    setTimeout(() => (btn.textContent = "Copy"), 1200);
+  } catch (err) {
+    console.error("Не удалось скопировать:", err);
+  }
+});
 
 function addChatMessage(text, role) {
   const bubble = renderMessage(text, role);

@@ -285,6 +285,55 @@ html, body {
   border-bottom-left-radius: 4px;
 }
 
+.code-block {
+  margin: 6px 0;
+  max-width: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 4px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  font: 500 11px/1 "Segoe UI", system-ui, sans-serif;
+  color: #8f94b8;
+}
+
+.code-copy {
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  background: #7177AC;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.code-copy:hover { filter: brightness(1.15); }
+
+.chat-msg pre {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.chat-msg code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  color: #e3e5f7;
+}
+/*подсветка*/
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in { color: #c792ea; }
+.hljs-string, .hljs-attr, .hljs-template-variable                { color: #a5e075; }
+.hljs-number, .hljs-symbol, .hljs-selector-class                 { color: #f78c6c; }
+.hljs-title, .hljs-function, .hljs-name, .hljs-tag               { color: #82aaff; }
+.hljs-comment, .hljs-quote                                       { color: #6b7199; font-style: italic; }
+.hljs-variable, .hljs-property, .hljs-params                     { color: #e3e5f7; }
+
 .chat-msg::before {
   display: none;
 }
