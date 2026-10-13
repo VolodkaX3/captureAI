@@ -80,11 +80,12 @@ function createOverlayWindow() {
 
   overlayWindow.on('hide', saveOverlayWindowPosition);
 
-  overlayWindow.on('blur', () => {
+/*  overlayWindow.on('blur', () => {
     if (overlayWindow && !overlayWindow.webContents.isDevToolsOpened()) {
       overlayWindow.hide();
     }
   });
+*/
 }
 
 function toggleOverlay() {

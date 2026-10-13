@@ -230,6 +230,9 @@ html, body {
 #chat-panel.closing {
   animation: settings-close 0.15s ease-in forwards;
 }
+.settings-header span {
+  -webkit-user-drag: element;
+}
 
 .chat-messages {
   flex: 1;
